@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no " />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+  <link rel="apple-touch-icon" href="icon.png">
+  <title>二维码通行</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background-color: #000;
+    }
+
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      background-image: url("background.png");
+      background-repeat: no-repeat;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0;
+      background-size: cover;
+      height: 100vh;
+    }
+
+    .header {
+      margin-top: 40px;
+      font-size: 18px;
+      color: #E4BE5D;
+    }
+
+    .card {
+      margin-top: 20px;
+      width: 80%;
+      max-width: 380px;
+      background: #fff;
+      border-radius: 5px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    .card-header {
+      background-color: #f4c540;
+      padding: 15px 12px 15px 12px;
+      text-align: center;
+      color: white;
+      font-size: 16px;
+    }
+
+    .card-body {
+      padding: 16px;
+      text-align: center;
+      color: #000;
+    }
+
+    .time {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    #qrcode {
+      margin: auto;
+      width: 230px;
+      height: 230px;
+      image-rendering: pixelated;
+    }
+
+    .refresh {
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: gray;
+
+    }
+
+    .refresh-title {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      /* Ẩn hiệu ứng highlight trên thiết bị di động */
+    }
+
+    .refresh-title:focus,
+    .refresh-title:active {
+      outline: none;
+      box-shadow: none;
+    }
+
+    .status {
+      margin-top: 8px;
+      color: #00cc66;
+      font-size: 16px;
+    }
+
+    .valid-time {
+      font-size: 15px;
+      color: #00cc66;
+      margin-top: 3px;
+    }
+
+    .note {
+      margin: 30px 10%;
+      font-size: 14px;
+      color: #e5d8b7;
+      line-height: 1.7;
+      text-align: -webkit-left;
+      text-indent: 1.5em;
+    }
+
+    .bottom-bar {
+      width: 100%;
+      height: 4px;
+      background-color: transparent;
+    }
+
+    img {
+      width: 230px;
+      height: 230px;
+    }
+
+    .refresh-title {
+      padding: 0 10px;
+    }
+
+    .relative {
+      position: relative;
+    }
+
+    .circle1 {
+      position: absolute;
+      background-color: rgb(61, 62, 82);
+      height: 12px;
+      width: 12px;
+      left: -6px;
+      border-radius: 50%;
+      bottom: -6px;
+    }
+
+    .circle2 {
+      position: absolute;
+      background-color: rgb(61, 62, 82);
+      height: 12px;
+      width: 12px;
+      right: -6px;
+      border-radius: 50%;
+      bottom: -6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">V25053183(Nguyễn Văn Trường)</div>
+  <div class="card">
+    <div class="card-header relative">
+      <p>将二维码对准扫描器扫码出场</p>
+      <div class="circle1"></div>
+      <div class="circle2"></div>
+    </div>
+
+    <div class="card-body">
+      <div class="time" id="currentTime">--</div>
+      <div id="qrcode">
+      </div>
+      <div class="refresh">
+        <p onclick="generateQRCode(event)" class="refresh-title">刷新二维码</p>
+      </div>
+      <div class="status">已生效</div>
+      <div class="valid-time" id="validTime">--</div>
+    </div>
+  </div>
+  <div class="note">
+    尊敬的员工您好，您已进入企业涉密区域，出于企业安全考虑，您的手机摄像头将被禁止拍摄，感谢您的配合。
+  </div>
+  <div class="bottom-bar"></div>
+  <!-- QRCode.js -->
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> -->
+  <script>
+    let qrCodeInstance;
+    function pad(num) {
+      return num < 10 ? '0' + num : num;
+    }
+
+    function updateTime() {
+      const now = new Date();
+      const formatted = `${now.getFullYear()}-${now.getMonth() + 1}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      document.getElementById('currentTime').textContent = formatted;
+    }
+    function updateValidTime(minutesToAdd = 3) {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + minutesToAdd);
+      const validTimeStr = `${pad(now.getHours() + 3) }:${pad(now.getMinutes())}:${pad(now.getSeconds())} `;
+      document.getElementById('validTime').textContent = validTimeStr;
+    }
+    function generateQRCode(event) {
+      if (event && event.currentTarget) {
+        event.currentTarget.blur(); // Bỏ focus khỏi nút
+      }
+
+      // Dữ liệu mẫu (có thể thay đổi để phản ánh thông tin thực tế)
+      // Lấy thời gian hiện tại
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const formattedTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+      // Đây là phần dữ liệu chính bạn muốn mã hóa
+      // Càng dài, mã QR càng phức tạp
+      const employeeId = "V25033183";
+      const employeeName = "NguyenVanTruong";
+      const uniqueToken = Math.random().toString(36).substring(2) + Date.now().toString(36); // Token ngẫu nhiên
+      const accessData = `https://Wistron.com/access?id=${employeeId}&name=${encodeURIComponent(employeeName)}&time=${encodeURIComponent(formattedTime)}&token=${uniqueToken}`;
+      const qrcodeElement = document.getElementById('qrcode');
+      if(qrCodeInstance){
+        qrCodeInstance.clear();
+        qrCodeInstance.makeCode(accessData);
+      }
+      else{
+      qrCodeInstance = new QRCode(qrcodeElement, {
+        text: accessData,
+        width: 230, // Kích thước gốc của mã QR (độ phân giải cao)
+        height: 230, // Kích thước gốc của mã QR (độ phân giải cao)
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H // Mức độ sửa lỗi cao (Error Correction Level H)
+      });
+      }
+      // Tạo mã QR với kích thước lớn hơn để có độ chi tiết cao
+      // Dù hiển thị 250px, nó được vẽ ban đầu với 400px để có nhiều "ô vuông" hơn
+      
+
+
+    }
+
+    // Initial
+    updateTime();
+    updateValidTime();
+    generateQRCode();
+    // Update every second
+    setInterval(updateTime, 1000);
+    setInterval(updateValidTime, 1000);
+    function fadeElement(selector, speed = 0.02) {
+      const element = document.querySelector(selector);
+      if (!element) {
+        console.error("Không tìm thấy phần tử với selector:", selector);
+        return;
+      }
+
+      let opacity = 1;      // Giá trị opacity ban đầu
+      let fadingOut = true; // Cờ kiểm soát trạng thái: mờ dần hay tăng dần
+
+      function animate() {
+        if (fadingOut) {
+          opacity -= speed;
+          if (opacity <= 0) {
+            opacity = 0;
+            fadingOut = false; // Khi mờ hết, chuyển sang tăng dần
+          }
+        } else {
+          opacity += speed;
+          if (opacity >= 1) {
+            opacity = 1;
+            fadingOut = true;  // Khi hiện đầy đủ, chuyển về mờ dần
+          }
+        }
+        element.style.opacity = opacity;
+        requestAnimationFrame(animate);
+      }
+
+      animate(); // Khởi chạy hiệu ứng
+    }
+
+    // Ví dụ gọi hàm với phần tử có class "status":
+    fadeElement('.status');
+  </script>
+</body>
+
+</html>
